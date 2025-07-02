@@ -5,5 +5,14 @@ const members = [
 ];
 let add = (num1, num2) => num1 + num2;
 
-module.exports = { members, add };
+let getPerson = () => {
+  return {
+    firstName: "John",
+    lastName: "Doe",
+    age: 37,
+    email: "john@email.com",
+  };
+};
+
+module.exports = { members, add, getPerson };
 // 공통으로 사용하는 함수, 변수는 모듈로 exports 해서 여럿이 동시에 사용가능.
