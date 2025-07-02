@@ -1,4 +1,4 @@
-const { members } = require("./data.js");
+const { members, add } = require("./data.js");
 
 console.log("hello, world");
 
