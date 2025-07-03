@@ -1,5 +1,5 @@
 const mysql = require("mysql2");
-// const mysql2 = require("mysql2"); 하나만 해야됨. mysql or mysql2
+// const mysql2 = require("mysql2"); 하나만 해야됨. mysql or mysql2asd
 const custSql = require("./sql/customerSql");
 
 const pool = mysql.createPool({
