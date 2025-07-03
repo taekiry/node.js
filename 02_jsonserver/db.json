@@ -2,17 +2,27 @@
   "posts": [
     {
       "id": "1",
-      "title": "바뀐 타이틀",
-      "author": "바뀐작성자"
+      "title": "fetch연습1",
+      "author": "admin"
     },
     {
-      "id": "2",
-      "title": "json 서버에서 추가함",
-      "author": "json"
-    },
-    {
-      "id": 9,
+      "id": 8,
       "title": "fetch연습",
+      "author": "admin"
+    },
+    {
+      "id": 10,
+      "title": "fetch연습10",
+      "author": "admin"
+    },
+    {
+      "id": 11,
+      "title": "fetch연습10",
+      "author": "admin"
+    },
+    {
+      "id": 5,
+      "title": "fetch연습10",
       "author": "admin"
     }
   ]
