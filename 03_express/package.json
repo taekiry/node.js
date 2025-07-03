@@ -1,0 +1,17 @@
+{
+  "name": "node-project",
+  "version": "1.0.0",
+  "description": "node, express API server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "project"
+  ],
+  "author": "taekiry",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
