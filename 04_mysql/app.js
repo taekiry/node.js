@@ -4,6 +4,7 @@ const path = require("path");
 const nodemailer = require("./nodemailer");
 const multer = require("multer"); //파일 첨부
 const xlsx = require("xlsx"); // 엑셀 파일분리
+const custSql = require("./sql/customerSql");
 //const { sendEmail } = require("./nodemailer");
 //dotenv 환경변수 읽어오기
 require("dotenv").config({ path: "./sql/.env" });
@@ -65,13 +66,59 @@ app.post("/excel", upload.single("myFile"), (req, res) => {
 
   const workbook = xlsx.readFile(`./uploads/${req.file.filename}`);
   const firstSheetName = workbook.SheetNames[0];
+  // 시트명으로 첫번째 시트 가져오기.(post방식으로)
+  const firstSheet = workbook.Sheets[firstSheetName];
+  // 첫번째 시트의 데이터를 객체로 생성.
+  const firstSheetJson = xlsx.utils.sheet_to_json(firstSheet);
+
+  // 정렬된 배열을 다시 생성
+  const fsj = firstSheetJson // [{a},{c},{z},{b}]
+    .sort((a, b) => {
+      return a.name < b.name; // 오름차순 (1,3,2,6) => (1,2,3,6) .sort 배열에서 a와 b를 가장적은 횟수로 순서정렬해줌.
+    });
+
+  // 반복문 활용 db에 insert. // async 넣어주면 insert시 foreach반복하면서 순서대로 들어감.
+  fsj.forEach(async (item) => {
+    let result = await mysql.query("customerInsert", item);
+    console.log(result);
+  });
 
   if (!req.file) {
     res.send("이미지 파일처리");
   }
   res.send("업로드 완료");
 });
+//chatgpt코드 customers 테이블 엑셀로만들기
 
+app.get("/downloads/customers", async (req, res) => {
+  try {
+    const rows = await mysql.query("customerList");
+    console.log("rows 타입:", typeof rows);
+    console.log("rows 구조:", rows);
+    console.log("Object.keys(rows):", Object.keys(rows));
+    // 엑셀 워크북/시트 생성
+    const ws = xlsx.utils.json_to_sheet(rows);
+    const wb = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(wb, ws, "Customers");
+
+    // 파일 저장 (또는 버퍼로 처리)
+    const filePath = path.join(__dirname, "customers.xlsx");
+    xlsx.writeFile(wb, filePath);
+
+    // 다운로드 응답
+    res.download(filePath, "customers.xlsx", (err) => {
+      if (err) {
+        console.error("Download error:", err);
+        res.status(500).send("파일 다운로드 실패");
+      } else {
+        console.log("엑셀 파일 다운로드 완료");
+      }
+    });
+  } catch (err) {
+    console.error("에러 발생:", err);
+    res.status(500).send("서버 오류");
+  }
+});
 // 조회.
 app.get("/customers", async (req, res) => {
   // get방식은 header에만 정보가 넘어감 따라서 bodyparser 안먹힘.
