@@ -1,9 +1,13 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const mysql = require("./sql"); //  /index.js 는 너무 흔하게 쓰여서 생략가능(?)
-
+const path = require("path");
+const nodemailer = require("./nodemailer");
+const multer = require("multer"); //파일 첨부
+const xlsx = require("xlsx"); // 엑셀 파일분리
+//const { sendEmail } = require("./nodemailer");
 //dotenv 환경변수 읽어오기
 require("dotenv").config({ path: "./sql/.env" });
+const mysql = require("./sql"); //  /index.js 는 너무 흔하게 쓰여서 생략가능(?) // .env값을  index 에 설정해둠. dotenv config 설정후 mysql선언해야함.
 console.log(process.env.HOST);
 console.log(process.env.USER);
 
@@ -13,6 +17,61 @@ app.use(bodyParser.json()); // post 방식으로 넘길때 body의 타입을 jso
 app.get("/", (req, res) => {
   res.send("Root 경로");
 });
+
+// 이메일 발송 화면
+app.get("/email", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html")); //path.join 경로 더하고 더해서 경로 만들어줌.
+});
+
+// 이메일 전송
+app.post("/email", async (req, res) => {
+  try {
+    let result = await nodemailer.sendEmail(req.body.param);
+    console.log(result);
+    res.json({ retCode: "success", retVal: result }); //{"retCode":"success"}
+  } catch (err) {
+    res.json({ retcode: "fail" });
+  }
+});
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    //destination 이라는 메소드
+    //저장경로 : (요청정보, 파일, 콜백)
+    cb(null, "uploads");
+  },
+  filename: function (req, file, cb) {
+    //업로드 파일명. (동일한 이름 overwrite 안되게끔)
+    let fn = Buffer.from(file.originalname, "latin1").toString("utf-8");
+    cb(null, Date.now() + "_" + fn); //업로드 파일명에 현재시간 붙이면 중복x 21232114_sample.jpg
+  },
+});
+
+// 엑셀 업로드 -> DB insert
+// multer.
+const upload = multer({
+  storage: storage, // multer안에 storage 속성에 위의 storage 저장.
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
+app.get("/excel", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "excel.html")); //path.join 경로 더하고 더해서 경로 만들어줌.
+});
+
+// 첨부 파일
+app.post("/excel", upload.single("myFile"), (req, res) => {
+  //업로드할 파일이 한개면 싱글, html input tag에  Name속성값
+  console.log(req.files); //업로드 파일 정보
+  console.log(req.body); // 요청 몸체의 정보
+
+  const workbook = xlsx.readFile(`./uploads/${req.file.filename}`);
+  const firstSheetName = workbook.SheetNames[0];
+
+  if (!req.file) {
+    res.send("이미지 파일처리");
+  }
+  res.send("업로드 완료");
+});
+
 // 조회.
 app.get("/customers", async (req, res) => {
   // get방식은 header에만 정보가 넘어감 따라서 bodyparser 안먹힘.
