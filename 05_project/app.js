@@ -2,22 +2,31 @@ const express = require("express");
 require("dotenv").config({ path: "./mysql/.env" });
 const multer = require("multer");
 const fs = require("fs");
+const path = require("path");
 
 const { query } = require("./mysql/index.js");
 const bodyParser = require("body-parser");
 const { error } = require("console");
 
+//서버 인스턴스 생성.
 const app = express();
 
 //body-parser express모듈에 있는 json()으로 .
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
+//서버 실행
 app.listen(3000, () => {
-  console.log("http://localhost:3000  서버 시작");
+  console.log("http://localhost:3000 서버 시작");
 });
 
 app.get("/", (req, res) => {
   res.send("Root Router");
+});
+
+//html 여는 경로.
+app.get("/fileupload", (req, res) => {
+  //html파일 열어야되니까
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // 데이터 쿼리.
@@ -39,7 +48,7 @@ app.get("/download/:productId/:fileName", (req, res) => {
   // 응답정보.
   res.header(
     "Content-Type",
-    `image/${fileName.substring(fileName.lastIndexOf("."))}` //lastIndexof(".") .을 기준으로 뒤에 것 전부 가져옴.
+    `image/${fileName.substring(fileName.lastIndexOf("."))}` //substring(lastIndexof(".")) .을 기준으로 뒤에 것 전부 가져옴.
   );
   if (!fs.existsSync(filepath)) {
     //existsSync 함수 경로에 실제 파일이 있는지 여부체크.
@@ -51,6 +60,34 @@ app.get("/download/:productId/:fileName", (req, res) => {
   }
 });
 
-// 파일 업로드.
+// 업로드폴더 경로 없을경우 생성.
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  // D://dev/git/node../05_project/uploads 가 있는가?
+  fs.mkdirSync(uploadDir);
+}
 
-app.get("/upload/:productId/:fileName", (req, res) => {});
+// 파일 업로드. 포스트맨으로 처리 힘들어서 업로드 페이지하나 만들고 작성.
+app.post("/upload/:fileName/:productId", (req, res) => {
+  const { fileName, productId } = req.params; //{filename :"sample.jpg", 더있다면 productId : 3 }
+  // const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
+
+  //업로드 폴더 안에 상품id가 적힌 폴더를 없으면 생성하도록.
+  let productDir = path.join(uploadDir, productId);
+  if (!fs.existsSync(productDir)) {
+    // D://dev/git/node../05_project/uploads/productId 가 있는가?
+    fs.mkdirSync(productDir);
+  }
+  //챗지피티 경로 공격 defense
+  const safeFilename = path.basename(fileName);
+  const filepath = path.join(productDir, safeFilename);
+
+  let base64Data = req.body.data;
+  let data = base64Data.slice(base64Data.indexOf(";base64,") + 8); //axios가 넘겨준 data라는 속성을 받아옴. 근데 data형식에 base64, 뒤부터가 이름
+  fs.writeFile(filepath, data, "base64", (err) => {
+    if (err) {
+      return res.status(500).send("error");
+    }
+    res.status(200).send("success");
+  });
+});

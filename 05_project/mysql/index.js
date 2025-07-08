@@ -12,8 +12,9 @@ const pool = mysql.createPool({
   connectionLimit: process.env.LIMIT,
 });
 
-async function query(alias, values = [], where = "") {
+async function query(alias, values, where = "") {
   return new Promise((resolve, reject) => {
+    // resolve, reject 는 then역할.
     console.log(sql[alias].query + where);
     pool.query(sql[alias].query + where, values, (err, result) => {
       if (err) {

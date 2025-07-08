@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--axios 라이브러리(뷰)-->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>Document</title>
+  </head>
+  <body>
+    <form action="">
+      <input type="file" name="base64" />
+      <button type="button">Upload</button>
+    </form>
+    <script>
+      let data = "";
+      let fn = "";
+      // 파일 선택.
+      document
+        .querySelector('input[name="base64"]')
+        .addEventListener("change", (e) => {
+          //console.dir(e.target.files[0]);
+          let file = e.target.files[0];
+          fn = file.name; //name 속성
+          let fr = new FileReader();
+          fr.onload = function (evt) {
+            console.log(evt.target.result); //result라는 속성에 base64, 다음부터가 이미지 파일의 이름.
+            data = evt.target.result;
+          };
+          fr.readAsDataURL(file);
+        });
+
+      //파일 저장.
+      document
+        .querySelector('button[type="button"]')
+        .addEventListener("click", async (e) => {
+          let result = await axios({
+            method: "post",
+            url: "/upload/" + fn + "/8",
+            data: { data }, //key와 value값이 같으면 줄여씀
+          });
+          console.log(result);
+        });
+    </script>
+  </body>
+</html>
