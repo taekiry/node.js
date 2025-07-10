@@ -3,7 +3,7 @@ require("dotenv").config({ path: "./mysql/.env" });
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
-const cors = require("cors")
+const cors = require("cors");
 
 const { query } = require("./mysql/index.js");
 const bodyParser = require("body-parser");
@@ -12,6 +12,7 @@ const { error } = require("console");
 //서버 인스턴스 생성.
 const app = express();
 
+//cors 처리
 app.use(cors());
 
 //body-parser express모듈에 있는 json()으로 .
@@ -94,7 +95,6 @@ app.post("/upload/:fileName/:productId", (req, res) => {
     res.status(200).send("success");
   });
 });
-
 
 // todo목록.
 app.get("/todoList", async (req, res) => {
