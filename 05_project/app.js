@@ -100,6 +100,25 @@ app.post("/upload/:fileName/:pid/:type", (req, res) => {
   });
 });
 
+app.post("/api/loginLog", async (req, res) => {
+  const { email, nickname } = req.body.param;
+  const timestamp = new Date().toISOString();
+
+  // 파일로 로그 저장
+  const fs = require("fs");
+  const logLine = `[${timestamp}] 로그인: ${nickname} (${email})\n`;
+
+  fs.appendFile("./logs/login.log", logLine, (err) => {
+    if (err) {
+      console.error("로그 저장 실패:", err);
+      return res.status(500).json({ error: "로그 저장 실패" });
+    }
+
+    console.log("✅ 로그인 로그 기록됨");
+    res.json({ message: "로그 기록 완료" });
+  });
+});
+
 // todo목록.
 app.get("/todoList", async (req, res) => {
   const result = await query("todoList");
