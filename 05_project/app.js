@@ -46,9 +46,10 @@ app.post("/api/:alias", async (req, res) => {
 });
 
 // 파일 다운로드.
-app.get("/download/:productId/:fileName", (req, res) => {
-  const { productId, fileName } = req.params;
-  const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
+app.get("/download/:pid/:fileName", (req, res) => {
+  const { pid, fileName } = req.params;
+  console.log(req.params);
+  const filepath = `${__dirname}/uploads/${pid}/${fileName}`;
   // 응답정보.
   res.header(
     "Content-Type",
@@ -60,7 +61,6 @@ app.get("/download/:productId/:fileName", (req, res) => {
     return res.status(404).json({ error: "can not found file." });
   } else {
     fs.createReadStream(filepath).pipe(res); // pipe(파이프) => 최종 목적지에 앞의 경로를따라가서 응답정보를 복사.
-    res.send("다운로드 완료");
   }
 });
 
@@ -72,12 +72,12 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // 파일 업로드. 포스트맨으로 처리 힘들어서 업로드 페이지하나 만들고 작성.
-app.post("/upload/:fileName/:productId", (req, res) => {
-  const { fileName, productId } = req.params; //{filename :"sample.jpg", 더있다면 productId : 3 }
+app.post("/upload/:fileName/:pid/:type", (req, res) => {
+  const { fileName, pid, type } = req.params; //{filename :"sample.jpg", 더있다면 productId : 3 }
   // const filepath = `${__dirname}/uploads/${productId}/${fileName}`;
 
   //업로드 폴더 안에 상품id가 적힌 폴더를 없으면 생성하도록.
-  let productDir = path.join(uploadDir, productId);
+  let productDir = path.join(uploadDir, pid);
   if (!fs.existsSync(productDir)) {
     // D://dev/git/node../05_project/uploads/productId 가 있는가?
     fs.mkdirSync(productDir);
@@ -88,7 +88,11 @@ app.post("/upload/:fileName/:productId", (req, res) => {
 
   let base64Data = req.body.data;
   let data = base64Data.slice(base64Data.indexOf(";base64,") + 8); //axios가 넘겨준 data라는 속성을 받아옴. 근데 data형식에 base64, 뒤부터가 이름
-  fs.writeFile(filepath, data, "base64", (err) => {
+  fs.writeFile(filepath, data, "base64", async (err) => {
+    // pid, type, filename => db insert
+    await query("productImageInsert", [
+      { product_id: pid, type: type, path: fileName },
+    ]);
     if (err) {
       return res.status(500).send("error");
     }
